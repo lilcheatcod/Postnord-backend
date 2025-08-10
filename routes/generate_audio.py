@@ -15,7 +15,7 @@ client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 def generate_audio():
     try:
         data = request.get_json()
-        text = "Hej"
+        text = data.get("text", "").strip() if data else ""
 
         if not text:
             return jsonify({"error": "No text provided"}), 400
