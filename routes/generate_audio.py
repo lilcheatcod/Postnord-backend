@@ -11,6 +11,10 @@ tts_bp = Blueprint('tts', __name__)
 # Initialize ElevenLabs client
 client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
+def generate_audio():
+    data = request.get_json()
+    print("Received text:", data.get("text"))
+
 @tts_bp.route("/generate-audio", methods=["POST"])
 def generate_audio():
     try:
