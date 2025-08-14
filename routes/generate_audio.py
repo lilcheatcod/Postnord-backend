@@ -13,6 +13,7 @@ client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
 def generate_audio():
     data = request.get_json()
+    print(f"[DEBUG] Backend recieved text: {data.get('text')}")
     print("Received text:", data.get("text"))
 
 @tts_bp.route("/generate-audio", methods=["POST"])
