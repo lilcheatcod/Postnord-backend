@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify, send_file
 from resend_notification import handle_resend_notification
 from elevenlabs.client import ElevenLabs
+from email.mime.text import MIMEText
 import io
 import os
+import smtplib
 
 app = Flask(__name__)
 
@@ -35,6 +37,42 @@ def recheck_sms():
         "status": "SMS notification resent",
         "tracking_number": tracking_number
     })
+
+@app.route("/send_email", methods=["POST"])
+def send_email():
+    """
+    Real email sender via Gmail SMTP.
+    Expects JSON:
+    {
+      "to": "customer@example.com",
+      "subject": "Din avisering",
+      "body": "Hej! Ditt paket ..."
+    }
+    """
+    try:
+        data = request.get_json(force=True) or {}
+        to = (data.get("to") or "").strip()
+        subject = (data.get("subject") or "").strip()
+        body = (data.get("body") or "").strip()
+
+        if not to or "@" not in to:
+            return jsonify({"error": "Invalid or missing 'to' address"}), 400
+
+        # Build MIME email
+        msg = MIMEText(body, "plain", "utf-8")
+        msg["Subject"] = subject
+        msg["From"] = os.getenv("EMAIL_USER")
+        msg["To"] = to
+
+        # Send via Gmail SMTP
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+            server.sendmail(os.getenv("EMAIL_USER"), [to], msg.as_string())
+
+        return jsonify({"status": "sent", "to": to, "subject": subject}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/flag_human_support_request", methods=["POST"])
 def flag_human_support_request():
